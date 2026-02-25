@@ -443,9 +443,6 @@ function setAuthMessage(text, isError = false) {
 
 function prettyAuthError(err) {
   const raw = err?.message || String(err || 'Authentication failed');
-  if (raw.includes('client is offline') || raw.includes('network-request-failed')) {
-    return 'You are offline right now. Please turn on internet and try again.';
-  }
   if (raw.includes('missing initial state') || raw.includes('sessionStorage is inaccessible')) {
     return 'Google login failed in this browser session. Open this site in normal Chrome (not in-app/incognito), allow cookies, then try again.';
   }
@@ -455,21 +452,7 @@ function prettyAuthError(err) {
   return raw;
 }
 
-function isOfflineError(err) {
-  const raw = err?.message || String(err || '');
-  return raw.includes('client is offline') || raw.includes('network-request-failed');
-}
-
 function bindAuth() {
-  if (!navigator.onLine) {
-    setAuthMessage('No internet connection. Please connect and try again.', true);
-  }
-
-  const onOnline = () => setAuthMessage('Back online. You can login now.');
-  const onOffline = () => setAuthMessage('No internet connection. Please connect and try again.', true);
-  window.addEventListener('online', onOnline, { once: true });
-  window.addEventListener('offline', onOffline, { once: true });
-
   document.getElementById('register').onclick = async () => {
     const username = document.getElementById('regUsername').value.trim();
     const email = document.getElementById('regEmail').value.trim();
@@ -480,14 +463,14 @@ function bindAuth() {
       const cred = await createUserWithEmailAndPassword(firebase.auth, email, password);
       await updateProfile(cred.user, { displayName: username });
       await ensureProfile(cred.user, username);
-    } catch (e) { setAuthMessage(prettyAuthError(e), true); }
+    } catch (e) { setAuthMessage(e.message, true); }
   };
   document.getElementById('login').onclick = async () => {
     setAuthMessage('Logging in...');
     try {
       const cred = await signInWithEmailAndPassword(firebase.auth, document.getElementById('loginEmail').value.trim(), document.getElementById('loginPassword').value);
       await ensureProfile(cred.user);
-    } catch (e) { setAuthMessage(prettyAuthError(e), true); }
+    } catch (e) { setAuthMessage(e.message, true); }
   };
   document.getElementById('googleLogin').onclick = async () => {
     setAuthMessage('Connecting Google...');
@@ -718,22 +701,8 @@ if (configured) {
       render();
       return;
     }
-    try {
-      await ensureProfile(user);
-    } catch (err) {
-      if (isOfflineError(err)) {
-        // Allow UI to continue; data listeners will sync when back online.
-      } else {
-        throw err;
-      }
-    }
-
-    try {
-      attachCoreListeners();
-    } catch (_) {
-      // If network is unavailable, render shell and wait for reconnect.
-    }
-
+    await ensureProfile(user);
+    attachCoreListeners();
     render();
   });
 
