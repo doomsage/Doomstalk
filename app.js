@@ -109,17 +109,6 @@ function chatPresenceLabel(chat, meId) {
   return other.online ? 'online' : `last seen ${format(other.lastSeen)}`;
 }
 
-function messageStatus(m, chat, meId) {
-  if (m.senderId !== meId) return '';
-  if (chat.type === 'group') {
-    const totalOthers = (chat.members || []).length - 1;
-    const seenByOthers = (m.seenBy || []).filter((id) => id !== meId).length;
-    return seenByOthers >= totalOthers ? 'seen' : 'delivered';
-  }
-  const otherId = (chat.members || []).find((id) => id !== meId);
-  return (m.seenBy || []).includes(otherId) ? 'seen' : 'delivered';
-}
-
 async function ensureProfile(user, fallbackName = null) {
   const ref = doc(firebase.db, 'users', user.uid);
   const snap = await getDoc(ref);
@@ -389,7 +378,7 @@ function chatWindow(chat, meId) {
     </header>
     <div class="typing">${typingUsers.length ? `${typingUsers.join(', ')} typing...` : ''}</div>
     <div class="message-area" id="msgs">
-      ${msgs.map((m) => `<div class="bubble ${m.senderId === meId ? 'mine' : ''}"><div class="small">${displayNameById(m.senderId)}</div>${m.deleted ? '<i>message deleted</i>' : renderMsgContent(m)}<div class="small">${messageStatus(m, chat, meId)}</div>${m.senderId === meId && !m.deleted ? `<button data-del-msg="${m.id}">Delete</button>` : ''}</div>`).join('')}
+      ${msgs.map((m) => `<div class="bubble ${m.senderId === meId ? 'mine' : ''}"><div class="small">${displayNameById(m.senderId)}</div>${m.deleted ? '<i>message deleted</i>' : renderMsgContent(m)}<div class="small">${m.senderId === meId ? ((chat.type === 'group' ? (((m.seenBy || []).length - 1 >= ((chat.members || []).length - 1)) ? 'seen' : 'delivered') : (((m.seenBy || []).includes((chat.members || []).find((id) => id !== meId)) ? 'seen' : 'delivered'))) : ''}</div>${m.senderId === meId && !m.deleted ? `<button data-del-msg="${m.id}">Delete</button>` : ''}</div>`).join('')}
     </div>
     <footer class="input-bar">
       <textarea id="messageInput" placeholder="Type message..."></textarea>
