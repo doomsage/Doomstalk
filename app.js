@@ -85,10 +85,20 @@ const format = (ts) => {
 
 const initials = (name = 'U') => name.split(' ').map((s) => s[0]).join('').slice(0, 2).toUpperCase();
 
+function messageTimeValue(m) {
+  const ts = m?.createdAt;
+  if (typeof ts === 'string') return new Date(ts).getTime() || 0;
+  if (typeof ts === 'number') return ts;
+  if (ts?.toMillis) return ts.toMillis();
+  if (typeof ts?.seconds === 'number') return ts.seconds * 1000;
+  if (m?.clientCreatedAt) return Number(m.clientCreatedAt) || 0;
+  return 0;
+}
+
 function chatMessages(chatRef) {
   return state.messages
     .filter((m) => m.chatRef === chatRef)
-    .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+    .sort((a, b) => messageTimeValue(a) - messageTimeValue(b));
 }
 
 function latestMessage(chatRef) {
@@ -181,7 +191,7 @@ function attachCoreListeners() {
 
 function attachMessageListener(chatRef) {
   if (activeUnsubMessages) activeUnsubMessages();
-  activeUnsubMessages = onSnapshot(query(collection(firebase.db, 'messages'), where('chatRef', '==', chatRef), orderBy('createdAt', 'asc')), (snap) => {
+  activeUnsubMessages = onSnapshot(query(collection(firebase.db, 'messages'), where('chatRef', '==', chatRef)), (snap) => {
     state.messages = [...state.messages.filter((m) => m.chatRef !== chatRef), ...snap.docs.map((d) => ({ id: d.id, ...d.data() }))];
     markSeenInActiveChat();
     render(false);
@@ -189,7 +199,7 @@ function attachMessageListener(chatRef) {
 }
 
 async function refreshChatMessages(chatRef) {
-  const snap = await getDocs(query(collection(firebase.db, 'messages'), where('chatRef', '==', chatRef), orderBy('createdAt', 'asc')));
+  const snap = await getDocs(query(collection(firebase.db, 'messages'), where('chatRef', '==', chatRef)));
   state.messages = [...state.messages.filter((m) => m.chatRef !== chatRef), ...snap.docs.map((d) => ({ id: d.id, ...d.data() }))];
   render(false);
 }
@@ -209,7 +219,7 @@ function getAllChats(meId) {
     ...state.groups.map((g) => ({ ...g, type: 'group', chatRef: `group:${g.id}` }))
   ]
     .filter((c) => (c.members || []).includes(meId))
-    .sort((a, b) => (latestMessage(b.chatRef)?.createdAt?.seconds || 0) - (latestMessage(a.chatRef)?.createdAt?.seconds || 0));
+    .sort((a, b) => messageTimeValue(latestMessage(b.chatRef)) - messageTimeValue(latestMessage(a.chatRef)));
 }
 
 function render(checkListeners = true) {
@@ -643,6 +653,7 @@ function bindMain(activeChat, meId) {
       type,
       content,
       createdAt: serverTimestamp(),
+      clientCreatedAt: Date.now(),
       seenBy: [meId],
       deleted: false
     });
