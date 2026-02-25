@@ -1,9 +1,0 @@
-{
-  "name": "doomstalk",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Client-side chat web demo",
-  "scripts": {
-    "serve": "python3 -m http.server 4173"
-  }
-}
