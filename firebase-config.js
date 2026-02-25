@@ -1,10 +1,10 @@
 // Firebase Spark project configuration (provided by user).
 window.DOOMSTALK_FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyAx3UCMDgd0vixIU7ROWq0xeBs8J6SglZs',
-  authDomain: 'doomstalk-doomsage.firebaseapp.com',
-  projectId: 'doomstalk-doomsage',
-  storageBucket: 'doomstalk-doomsage.firebasestorage.app',
-  messagingSenderId: '943807463066',
-  appId: '1:943807463066:web:9cd44355baf22f3266a923',
-  measurementId: 'G-RRQB11P7YD'
+  apiKey: "AIzaSyCFmLKG30oEzspS3oPBzDGx23BpoUrdIPQ",
+  authDomain: "doomstalk-655c9.firebaseapp.com",
+  projectId: "doomstalk-655c9",
+  storageBucket: "doomstalk-655c9.firebasestorage.app",
+  messagingSenderId: "341214550804",
+  appId: "1:341214550804:web:cd21fc60b49cd3577c8001",
+  measurementId: "G-M09B10B6YS"
 };
